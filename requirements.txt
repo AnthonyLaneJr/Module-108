@@ -1,0 +1,5 @@
+flask
+
+use pip to install the above applications
+
+py -m pip install -r (file requirements)
