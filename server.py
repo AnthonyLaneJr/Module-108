@@ -1,12 +1,14 @@
 import json
 from urllib.parse import _ResultMixinBytes
-from flask import Flask, abort, request
+from flask import Flask, Response, abort, request
 from about_me import me
 from mock_data import catalog
 from config import db
 from bson import ObjectId
+from flask_cors import CORS
 
 app = Flask("Project")
+CORS(app)
 
 @app.route("/", methods=['GET'])
 def home():
@@ -221,15 +223,30 @@ def get_all_coupons():
 def save_coupon():
     try:
         coupon = request.get_json()
+        errors=""
+        #val;idations, discount betw 1<= discount <= 50, at east 5 character, no dduplicate code
+
+        if not "code" in coupon or len(coupon["code"]) < 3:
+            errors = "Code is required and requires at least 3 characters."
+
+        if not "discount" in coupon or coupon["discount"] < 1 or coupon["discount"] > 50 :
+            errors += " Coupons must have a minimumm discount of 1 and a max discount of 50."
+
+        code = coupon["code"]
+        exist = db.coupons.find_one({"code": coupon["code"]})
+        if exist:
+            return Response( "This Coupon Code is already in use.", status=400)
+
+        if errors:
+            return abort(400, errors)
 
         db.coupons.insert_one(coupon)
-        coupon["_id"] = str(coupon["_id"])
-
+        coupon["_id"] = str(coupon["_id"])        
 
         return json.dumps(coupon)
 
-    except:
-        return "Save coupon page, error occured"
+    except Exception as e:
+        return abort(500, F"Save coupon page, error occured. {errors}, {e}")
 
 # get CC by code
 @app.route("/api/coupons/<id>", methods=["GET"])
