@@ -46,7 +46,7 @@ def get_catalog():
 def save_product():
     try:
         product = request.get_json()
-
+        errors=""
         # title, at least 5 chars long
         if not "title" in product or len(product["title"]) < 5:
             errors = "Title is required and requires at least 5 characters."
